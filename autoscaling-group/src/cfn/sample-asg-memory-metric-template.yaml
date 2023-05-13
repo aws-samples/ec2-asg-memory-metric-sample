@@ -1,0 +1,367 @@
+Mappings:
+  RegionMap:
+    ap-south-1:
+      HVM64: ami-01e436b65d641478d
+    eu-north-1:
+      HVM64: ami-0c0895eeadb466123
+    eu-west-3:
+      HVM64: ami-05262a4bcea6f9fa2
+    eu-west-2:
+      HVM64: ami-015891366865ea5ca
+    eu-west-1:
+      HVM64: ami-05f1fedd8287cef0b
+    ap-northeast-3:
+      HVM64: ami-076592ee533d1857c
+    ap-northeast-2:
+      HVM64: ami-0970cc54a3aa77466
+    ap-northeast-1:
+      HVM64: ami-0ba151ad81cdd97be
+    ca-central-1:
+      HVM64: ami-0c0ef44e5ccbd075f
+    sa-east-1:
+      HVM64: ami-0ac6b9321493324ee
+    ap-southeast-1:
+      HVM64: ami-00def9d5d68359454
+    ap-southeast-2:
+      HVM64: ami-0bd8241d9d44dc95f
+    eu-central-1:
+      HVM64: ami-05fc4b58217803cb7
+    ap-southeast-3:
+      HVM64: ami-06e035fc820f4e16f
+    us-east-1:
+      HVM64: ami-0481e8ba7f486bd99
+    us-east-2:
+      HVM64: ami-0a14db46282743a66
+    us-west-1:
+      HVM64: ami-0a417a9f917183811
+    us-west-2:
+      HVM64: ami-088b024fca114855d
+Resources:
+  cwagentconfigssmparamC847F036:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Value: |-
+        {
+            "agent": {
+              "metrics_collection_interval": 60
+            },
+            "metrics": {
+              "namespace": "EC2_ASG_Memory",
+              "append_dimensions": {
+                "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+                "InstanceId": "${aws:InstanceId}"
+              },
+              "aggregation_dimensions": [["AutoScalingGroupName"]],
+              "metrics_collected": {
+                "mem": {
+                  "measurement": [
+                    {"name": "mem_used_percent", "rename": "MemoryUtilization", "unit": "Percent"}
+                  ],
+                  "metrics_collection_interval": 60
+                }
+              }
+            }
+        }
+      Description: Cloudwatch Agent Parameter
+      Name: /cwagent/linux/asg
+      Tier: Standard
+  VPCB9E5F0B4:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: SampleASGMemoryMetric/VPC
+  VPCPublicSubnet1SubnetB4246D30:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCB9E5F0B4
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Public
+        - Key: aws-cdk:subnet-type
+          Value: Public
+        - Key: Name
+          Value: SampleASGMemoryMetric/VPC/PublicSubnet1
+  VPCPublicSubnet1RouteTableFEE4B781:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCB9E5F0B4
+      Tags:
+        - Key: Name
+          Value: SampleASGMemoryMetric/VPC/PublicSubnet1
+  VPCPublicSubnet1RouteTableAssociation0B0896DC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: VPCPublicSubnet1RouteTableFEE4B781
+      SubnetId:
+        Ref: VPCPublicSubnet1SubnetB4246D30
+  VPCPublicSubnet1DefaultRoute91CEF279:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: VPCPublicSubnet1RouteTableFEE4B781
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: VPCIGWB7E252D3
+    DependsOn:
+      - VPCVPCGW99B986DC
+  VPCPublicSubnet2Subnet74179F39:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPCB9E5F0B4
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - Fn::GetAZs:
+              Ref: AWS::Region
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Public
+        - Key: aws-cdk:subnet-type
+          Value: Public
+        - Key: Name
+          Value: SampleASGMemoryMetric/VPC/PublicSubnet2
+  VPCPublicSubnet2RouteTable6F1A15F1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCB9E5F0B4
+      Tags:
+        - Key: Name
+          Value: SampleASGMemoryMetric/VPC/PublicSubnet2
+  VPCPublicSubnet2RouteTableAssociation5A808732:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: VPCPublicSubnet2RouteTable6F1A15F1
+      SubnetId:
+        Ref: VPCPublicSubnet2Subnet74179F39
+  VPCPublicSubnet2DefaultRouteB7481BBA:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: VPCPublicSubnet2RouteTable6F1A15F1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: VPCIGWB7E252D3
+    DependsOn:
+      - VPCVPCGW99B986DC
+  VPCIGWB7E252D3:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: SampleASGMemoryMetric/VPC
+  VPCVPCGW99B986DC:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPCB9E5F0B4
+      InternetGatewayId:
+        Ref: VPCIGWB7E252D3
+  ec2securitygroup00868854:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: security group for SSH
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: "-1"
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          Description: allow SSH access from anywhere
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+      Tags:
+        - Key: Name
+          Value: SampleASGMemoryMetric-SG
+      VpcId:
+        Ref: VPCB9E5F0B4
+  ec2cwagentrole8ABC9E6C:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/CloudWatchAgentServerPolicy
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/CloudWatchAgentAdminPolicy
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Name
+          Value: SampleASGMemoryMetric-iam-role
+  launchtemplateProfile8F47003C:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - Ref: ec2cwagentrole8ABC9E6C
+    DependsOn:
+      - cwagentconfigssmparamC847F036
+  launchtemplateCB68AF92:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              VolumeSize: 8
+        IamInstanceProfile:
+          Arn:
+            Fn::GetAtt:
+              - launchtemplateProfile8F47003C
+              - Arn
+        ImageId:
+          Fn::FindInMap:
+            - RegionMap
+            - Ref: AWS::Region
+            - HVM64
+        InstanceType: t3.micro
+        SecurityGroupIds:
+          - Fn::GetAtt:
+              - ec2securitygroup00868854
+              - GroupId
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: memory-asg-server
+          - ResourceType: volume
+            Tags:
+              - Key: Name
+                Value: memory-asg-server
+        UserData:
+          Fn::Base64: |-
+            #!/bin/bash
+
+            region=ap-southeast-1
+            ssm_param_name=ssm:/cwagent/linux/asg
+            apt-get update -y
+            # Ensure apt-get is killed after update to avoid resource-locking
+            killall apt apt-get
+            sleep 3
+            apt-get install -y wget stress
+            echo Downloading Cloudwatch Agent
+            sleep 3
+            wget https://s3.$region.amazonaws.com/amazoncloudwatch-agent-$region/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+            echo Installing Cloudwatch Agent
+            dpkg -i -E ./amazon-cloudwatch-agent.deb
+            echo Starting Cloudwatch Agent
+            sleep 3
+            /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c $ssm_param_name -s
+      TagSpecifications:
+        - ResourceType: launch-template
+          Tags:
+            - Key: Name
+              Value: memory-asg-server
+    DependsOn:
+      - cwagentconfigssmparamC847F036
+  autoscalinggroupASGB7F94D14:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      MaxSize: "2"
+      MinSize: "1"
+      LaunchTemplate:
+        LaunchTemplateId:
+          Ref: launchtemplateCB68AF92
+        Version:
+          Fn::GetAtt:
+            - launchtemplateCB68AF92
+            - LatestVersionNumber
+      VPCZoneIdentifier:
+        - Ref: VPCPublicSubnet1SubnetB4246D30
+        - Ref: VPCPublicSubnet2Subnet74179F39
+    UpdatePolicy:
+      AutoScalingScheduledAction:
+        IgnoreUnmodifiedGroupSizeProperties: true
+  stepscalingpolicyLowerPolicy937E45FC:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AutoScalingGroupName:
+        Ref: autoscalinggroupASGB7F94D14
+      AdjustmentType: ChangeInCapacity
+      MetricAggregationType: Average
+      PolicyType: StepScaling
+      StepAdjustments:
+        - MetricIntervalUpperBound: 0
+          ScalingAdjustment: -1
+  stepscalingpolicyLowerAlarm7CA162D6:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ComparisonOperator: LessThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      AlarmActions:
+        - Ref: stepscalingpolicyLowerPolicy937E45FC
+      AlarmDescription: Lower threshold scaling alarm
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value:
+            Ref: autoscalinggroupASGB7F94D14
+      MetricName: MemoryUtilization
+      Namespace: EC2_ASG_Memory
+      Period: 60
+      Statistic: Average
+      Threshold: 20
+  stepscalingpolicyUpperPolicyF563C2BD:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AutoScalingGroupName:
+        Ref: autoscalinggroupASGB7F94D14
+      AdjustmentType: ChangeInCapacity
+      MetricAggregationType: Average
+      PolicyType: StepScaling
+      StepAdjustments:
+        - MetricIntervalLowerBound: 0
+          ScalingAdjustment: 1
+  stepscalingpolicyUpperAlarmC90C384A:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 3
+      AlarmActions:
+        - Ref: stepscalingpolicyUpperPolicyF563C2BD
+      AlarmDescription: Upper threshold scaling alarm
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value:
+            Ref: autoscalinggroupASGB7F94D14
+      MetricName: MemoryUtilization
+      Namespace: EC2_ASG_Memory
+      Period: 60
+      Statistic: Average
+      Threshold: 30
+

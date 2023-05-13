@@ -1,0 +1,9 @@
+// tsconfig.json
+{
+    "compilerOptions": {
+      "esModuleInterop": true,
+      "resolveJsonModule": true,
+      "target": "ES6",
+      "moduleResolution": "node"
+    }
+  }
