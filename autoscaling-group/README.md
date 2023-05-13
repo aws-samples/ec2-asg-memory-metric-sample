@@ -4,7 +4,7 @@ This example deploys an Autoscaling Group with Cloudwatch agent configuration wh
 
 This example will deploy:
 - a new VPC with 2 AZs and 2 public subnets
-- a Security Group and IAM role
+- a Security Group and IAM role. Security group is allowing port 22 from any IPv4 for EC2 Instance Connect access
 - a SSM parameter
 - a Launch Template
 - an Autoscaling Group with custom Step Scaling Policy
@@ -41,7 +41,7 @@ This is the architecture for EC2 Autoscaling Group with memory metric
     ![EC2 Instance Connect](./media/3-asg-instance-connect.png)
 
 ### 4. Run command to generate load to memory
-1. Run command
+1. Run command. Increase `--vm-bytes` or `--timeout` if Cloudwatch Alarm is not yet triggered.
    ```
    stress --vm 1 --vm-bytes 640M --timeout 300s
    ```

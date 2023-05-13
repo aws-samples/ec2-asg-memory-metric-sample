@@ -14,18 +14,13 @@ class SampleASGMemoryMetricStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // AMI Mappings
-    const amiRegionMap = new cdk.CfnMapping(this, 'RegionMap', {
-      mapping: amiMap.Mappings.RegionMap
-    });
-
     // SSM Paramter
     const ssmParamValue = readFileSync(
       './configs/ssm-cw-agent-parameter.json',
       'utf8'
     );
 
-    const cwAgentSSMParam = new ssm.StringParameter(this, 'cwagent-config-ssm-param', {
+    const cwAgentSSMParam = new ssm.StringParameter(this, 'SSM-Parameter-CWAgent', {
       parameterName: '/cwagent/linux/asg',
       stringValue: ssmParamValue,
       description: 'Cloudwatch Agent Parameter',
@@ -45,12 +40,7 @@ class SampleASGMemoryMetricStack extends cdk.Stack {
       ]
     });
 
-    // Parameterize AZs for VPC Subnets
-    vpc.publicSubnets.forEach((vpcSubnet, index) => {
-      (vpcSubnet.node.defaultChild as ec2.CfnSubnet).availabilityZone = cdk.Fn.select(index, cdk.Fn.getAzs(cdk.Aws.REGION));
-    });
-
-    const sshOnlySG = new ec2.SecurityGroup(this, 'ec2-security-group', {
+    const sshOnlySG = new ec2.SecurityGroup(this, 'EC2-Security-Group', {
       vpc,
       allowAllOutbound: true,
       description: 'security group for SSH'
@@ -65,7 +55,7 @@ class SampleASGMemoryMetricStack extends cdk.Stack {
     cdk.Tags.of(sshOnlySG).add('Name', this.stackName + '-SG');
 
     // ec2 Role
-    const ec2Role = new iam.Role(this, 'ec2-cw-agent-role', {
+    const ec2Role = new iam.Role(this, 'EC2-Role', {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy'),
@@ -79,19 +69,18 @@ class SampleASGMemoryMetricStack extends cdk.Stack {
     const userDataScript = readFileSync(
       './configs/userdata.sh',
       'utf8'
-    ).replace('#!/bin/bash', '');
+    ).replace('#!/bin/bash', '').trim();
 
     const userData = ec2.UserData.forLinux();
     userData.addCommands(userDataScript);
 
     // Create Launch Template
-    const launchTemplate = new ec2.LaunchTemplate(this, 'launch-template', {
+    const launchTemplate = new ec2.LaunchTemplate(this, 'ASG-Launch-Template', {
       instanceType: new ec2.InstanceType('t3.micro'),
       securityGroup: sshOnlySG,
-      machineImage: ec2.MachineImage.lookup({
-        name: 'ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-*',
-        owners: ['amazon']
-      }),
+      machineImage: ec2.MachineImage.genericLinux(
+        amiMap.Mappings.RegionMap
+      ),
       role: ec2Role,
       blockDevices: [
         {
@@ -102,14 +91,10 @@ class SampleASGMemoryMetricStack extends cdk.Stack {
       userData: userData
     });
 
-    // Parameterize AMI
-    const cfnLaunchTemplate = launchTemplate.node.defaultChild as ec2.CfnLaunchTemplate;
-    cfnLaunchTemplate.launchTemplateData['imageId'] = amiRegionMap.findInMap(cdk.Aws.REGION, 'HVM64');
-
     cdk.Tags.of(launchTemplate).add('Name', 'memory-asg-server');
 
     // Create AutoScalingGroup
-    const ASG = new autoscaling.AutoScalingGroup(this, 'autoscaling-group', {
+    const ASG = new autoscaling.AutoScalingGroup(this, 'AutoScaling-Group', {
       vpc: vpc,
       launchTemplate: launchTemplate,
       minCapacity: 1,
@@ -117,7 +102,7 @@ class SampleASGMemoryMetricStack extends cdk.Stack {
     });
 
     // Create Scaling Policy
-    const scaleOutStepScalingPolicy = new autoscaling.StepScalingPolicy(this, 'stepscaling-policy', {
+    const scaleOutStepScalingPolicy = new autoscaling.StepScalingPolicy(this, 'StepScaling-Policy', {
       autoScalingGroup: ASG,
       metric: new cloudwatch.Metric({
         metricName: "MemoryUtilization",
@@ -142,10 +127,6 @@ class SampleASGMemoryMetricStack extends cdk.Stack {
 const app = new cdk.App();
 
 new SampleASGMemoryMetricStack(app, 'SampleASGMemoryMetric', {
-  env: {
-    account: process.env.CDK_DEPLOY_ACCOUNT || process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEPLOY_REGION || process.env.CDK_DEFAULT_REGION
-  },
   synthesizer: new cdk.DefaultStackSynthesizer({
     generateBootstrapVersionRule: false
   })

@@ -1,43 +1,5 @@
-Mappings:
-  RegionMap:
-    ap-south-1:
-      HVM64: ami-01e436b65d641478d
-    eu-north-1:
-      HVM64: ami-0c0895eeadb466123
-    eu-west-3:
-      HVM64: ami-05262a4bcea6f9fa2
-    eu-west-2:
-      HVM64: ami-015891366865ea5ca
-    eu-west-1:
-      HVM64: ami-05f1fedd8287cef0b
-    ap-northeast-3:
-      HVM64: ami-076592ee533d1857c
-    ap-northeast-2:
-      HVM64: ami-0970cc54a3aa77466
-    ap-northeast-1:
-      HVM64: ami-0ba151ad81cdd97be
-    ca-central-1:
-      HVM64: ami-0c0ef44e5ccbd075f
-    sa-east-1:
-      HVM64: ami-0ac6b9321493324ee
-    ap-southeast-1:
-      HVM64: ami-00def9d5d68359454
-    ap-southeast-2:
-      HVM64: ami-0bd8241d9d44dc95f
-    eu-central-1:
-      HVM64: ami-05fc4b58217803cb7
-    ap-southeast-3:
-      HVM64: ami-06e035fc820f4e16f
-    us-east-1:
-      HVM64: ami-0481e8ba7f486bd99
-    us-east-2:
-      HVM64: ami-0a14db46282743a66
-    us-west-1:
-      HVM64: ami-0a417a9f917183811
-    us-west-2:
-      HVM64: ami-088b024fca114855d
 Resources:
-  cwagentconfigssmparamC847F036:
+  SSMParameterCWAgentCCA60AE1:
     Type: AWS::SSM::Parameter
     Properties:
       Type: String
@@ -82,8 +44,7 @@ Resources:
       AvailabilityZone:
         Fn::Select:
           - 0
-          - Fn::GetAZs:
-              Ref: AWS::Region
+          - Fn::GetAZs: ""
       CidrBlock: 10.0.0.0/24
       MapPublicIpOnLaunch: true
       Tags:
@@ -126,8 +87,7 @@ Resources:
       AvailabilityZone:
         Fn::Select:
           - 1
-          - Fn::GetAZs:
-              Ref: AWS::Region
+          - Fn::GetAZs: ""
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
       Tags:
@@ -175,7 +135,7 @@ Resources:
         Ref: VPCB9E5F0B4
       InternetGatewayId:
         Ref: VPCIGWB7E252D3
-  ec2securitygroup00868854:
+  EC2SecurityGroup5161A771:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: security group for SSH
@@ -194,7 +154,7 @@ Resources:
           Value: SampleEC2MemoryMetric-SG
       VpcId:
         Ref: VPCB9E5F0B4
-  ec2cwagentrole8ABC9E6C:
+  EC2Role24AC9335:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -223,37 +183,36 @@ Resources:
       Tags:
         - Key: Name
           Value: SampleEC2MemoryMetric-iam-role
-  memorymetricec2InstanceProfile018FBF6F:
+  EC2InstanceInstanceProfile2E17CF74:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
-        - Ref: ec2cwagentrole8ABC9E6C
+        - Ref: EC2Role24AC9335
     DependsOn:
-      - cwagentconfigssmparamC847F036
-  memorymetricec2565D35ED:
+      - SSMParameterCWAgentCCA60AE1
+  EC2Instance092B3183:
     Type: AWS::EC2::Instance
     Properties:
       AvailabilityZone:
         Fn::Select:
           - 0
-          - Fn::GetAZs:
-              Ref: AWS::Region
+          - Fn::GetAZs: ""
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeSize: 8
       IamInstanceProfile:
-        Ref: memorymetricec2InstanceProfile018FBF6F
+        Ref: EC2InstanceInstanceProfile2E17CF74
       ImageId:
         Fn::FindInMap:
-          - RegionMap
+          - EC2InstanceAmiMap463A0D1D
           - Ref: AWS::Region
-          - HVM64
+          - ami
       InstanceType: t3.micro
       PropagateTagsToVolumeOnCreation: true
       SecurityGroupIds:
         - Fn::GetAtt:
-            - ec2securitygroup00868854
+            - EC2SecurityGroup5161A771
             - GroupId
       SubnetId:
         Ref: VPCPublicSubnet1SubnetB4246D30
@@ -263,7 +222,6 @@ Resources:
       UserData:
         Fn::Base64: |-
           #!/bin/bash
-
           region=ap-southeast-1
           ssm_param_name=ssm:/cwagent/linux/basic
           apt-get update -y
@@ -280,6 +238,43 @@ Resources:
           sleep 3
           /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c $ssm_param_name -s
     DependsOn:
-      - cwagentconfigssmparamC847F036
-      - ec2cwagentrole8ABC9E6C
-
+      - EC2Role24AC9335
+      - SSMParameterCWAgentCCA60AE1
+Mappings:
+  EC2InstanceAmiMap463A0D1D:
+    ap-south-1:
+      ami: ami-01e436b65d641478d
+    eu-north-1:
+      ami: ami-0c0895eeadb466123
+    eu-west-3:
+      ami: ami-05262a4bcea6f9fa2
+    eu-west-2:
+      ami: ami-015891366865ea5ca
+    eu-west-1:
+      ami: ami-05f1fedd8287cef0b
+    ap-northeast-3:
+      ami: ami-076592ee533d1857c
+    ap-northeast-2:
+      ami: ami-0970cc54a3aa77466
+    ap-northeast-1:
+      ami: ami-0ba151ad81cdd97be
+    ca-central-1:
+      ami: ami-0c0ef44e5ccbd075f
+    sa-east-1:
+      ami: ami-0ac6b9321493324ee
+    ap-southeast-1:
+      ami: ami-00def9d5d68359454
+    ap-southeast-2:
+      ami: ami-0bd8241d9d44dc95f
+    eu-central-1:
+      ami: ami-05fc4b58217803cb7
+    ap-southeast-3:
+      ami: ami-06e035fc820f4e16f
+    us-east-1:
+      ami: ami-0481e8ba7f486bd99
+    us-east-2:
+      ami: ami-0a14db46282743a66
+    us-west-1:
+      ami: ami-0a417a9f917183811
+    us-west-2:
+      ami: ami-088b024fca114855d

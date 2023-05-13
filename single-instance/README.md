@@ -4,7 +4,7 @@ This example deploys an EC2 with Cloudwatch agent configuration which sends memo
 
 This example will deploy:
 - a new VPC with 2 AZs and 2 public subnets
-- a Security Group and IAM role
+- a Security Group and IAM role. Security group is allowing port 22 from any IPv4 for EC2 Instance Connect access
 - an SSM parameter
 - an EC2 Instance
 - Cloudwatch custom metric

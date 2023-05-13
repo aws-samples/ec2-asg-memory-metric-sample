@@ -11,9 +11,8 @@ generateAMIMappingYAML() {
     regions=$(aws ec2 describe-regions --output text --query 'Regions[*].RegionName')
     for region in $regions; do
         (
-            echo "    $region:"
             AMI=$(aws ec2 describe-images --region $region --filters Name=owner-alias,Values="amazon" Name=name,Values="$amiNameFilter*" Name=architecture,Values=x86_64 | jq -r '.Images |= sort_by(.CreationDate) | .Images | reverse | .[0].ImageId')
-            echo "      HVM64: $AMI"
+            echo "    $region: $AMI"
         )
     done
 }
