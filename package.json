@@ -1,9 +1,11 @@
 {
   "name": "ec2-asg-memory-metric",
   "version": "0.1.0",
-  "bin": {
-    "multiple-cdk-projects": "bin/ec2-asg-memory-metric.js"
+  "description": "Memory metric demo in EC2 and Autoscaling Group",
+  "author": {
+    "name": "Aditya Pradana"
   },
+  "license": "MIT",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
