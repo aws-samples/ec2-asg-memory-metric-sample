@@ -23,8 +23,11 @@ This is the architecture for single instance EC2 with memory metric
 4. Run `stress` command to generate load to memory
 
 ### 1a. Using CDK
-1. Ensure CDK is installed and bootstrapped (run `cdk bootstrap` to bootstrap CDK).
-2. Deploy the CDK code using `cdk deploy` from cdk root directory ie. `./src/cdk/`
+1. Clone this repository: `git clone https://github.com/aws-samples/ec2-asg-memory-metric-sample.git`
+2. Navigate to single-instance cdk directory: `cd single-instance/src/cdk`
+3. Install the dependencies: `npm i`
+4. Ensure CDK is installed and bootstrapped (run `cdk bootstrap` to bootstrap CDK).
+5. Deploy the CDK code using `cdk deploy` from cdk root directory `./src/cdk/`
 
 ### 1b. Using Cloudformation
 1. Simply deploy the Cloudformation template in `./src/cfn/sample-ec2-memory-metric-template.yaml`. Complete instruction on how to deploy Cloudformation template in Cloudformation console can be found [here](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html)
@@ -44,3 +47,10 @@ This is the architecture for single instance EC2 with memory metric
    stress --vm 1 --vm-bytes 640M --timeout 300s
    ```
     ![Stress Command](./media/4-single-server-stress.png)
+
+## Additional Note
+
+This sample uses Ubuntu 20.04 AMI. List of Region's AMI is available in the `src/cdk/configs/ami-mapping.json`. If you want to update this to the latest AMI:
+1. Navigate to configs directory: `cd cdk/configs`
+2. From within the directory, run `./generate-ami-mapping.sh` and wait until `ami-mappings.json is repopulated.
+3. Navigate to root cdk directory `cd ../cdk` and re-run `cdk synthesize ../cfn/sample-ec2-memory-metric-template.yaml` to update Cloudformation template
